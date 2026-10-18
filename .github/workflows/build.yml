@@ -1,0 +1,64 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nodes:
+    name: Collect versions
+    runs-on: ubuntu-latest
+    outputs:
+      nodes: ${{ steps.nodes.outputs.nodes }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Every `match("<version>", "<loader>", ...)` line in settings.gradle.kts adds one node per loader
+      - name: Read Stonecutter nodes
+        id: nodes
+        run: |
+          nodes=$(grep -oP '^\s*match\(\K.*(?=\))' settings.gradle.kts \
+            | jq -Rc 'split(", ") | map(fromjson) | .[0] as $version | .[1:] | map("\($version)-\(.)")' \
+            | jq -sc 'add')
+          echo "nodes=$nodes" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: ${{ matrix.node }}
+    needs: nodes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ${{ fromJson(needs.nodes.outputs.nodes) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # Minecraft before 26.1 is built with Java 21, from 26.1 on with Java 25
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: |
+            21
+            25
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build
+        run: >
+          ./gradlew ":${{ matrix.node }}:buildAndCollect"
+          -Porg.gradle.java.installations.fromEnv=JAVA_HOME_21_X64,JAVA_HOME_25_X64
+
+      - name: Find jar
+        id: jar
+        run: echo "path=$(ls build/libs/*/*.jar)" >> "$GITHUB_OUTPUT"
+
+      # Uploaded without a zip around it, so the artifact downloads as the mod jar itself
+      - uses: actions/upload-artifact@v7
+        with:
+          path: ${{ steps.jar.outputs.path }}
+          archive: false
+          if-no-files-found: error

@@ -54,6 +54,9 @@ source tree. Each node in `settings.gradle.kts` targets one Minecraft version an
 ./gradlew :26.3-neoforge:runClient       # run a specific version (NeoForge)
 ```
 
+Every push to `main` builds all versions on GitHub Actions; the jars can be downloaded from the run's
+artifacts.
+
 On **NixOS**, run the game inside the provided Nix shell so Minecraft finds its native libraries
 (otherwise it crashes with `GLFW error during init: Failed to detect any supported platform`):
 
