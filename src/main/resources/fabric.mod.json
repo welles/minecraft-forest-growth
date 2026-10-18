@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "Trees spread naturally: from time to time, saplings sprout near existing trees, so forests slowly grow on their own.",
+  "authors": [
+    "Nico Welles"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.welles.forestgrowth.ForestGrowthFabric"
+    ]
+  },
+  "mixins": [
+    "forestgrowth.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader}",
+    "minecraft": "${minecraft}"
+  }
+}

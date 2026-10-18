@@ -1,0 +1,22 @@
+license = "MIT"
+
+modLoader = "javafml"
+loaderVersion = "[1,)"
+
+[[mods]]
+modId = "${id}"
+displayName = "${name}"
+version = "${version}"
+authors = "Nico Welles"
+displayTest = "IGNORE_SERVER_VERSION" # server-side only, clients do not need the mod
+description = "Trees spread naturally: from time to time, saplings sprout near existing trees, so forests slowly grow on their own."
+
+[[mixins]]
+config = "forestgrowth.mixins.json"
+
+[[dependencies.${id}]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft}"
+ordering = "NONE"
+side = "BOTH"
