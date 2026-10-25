@@ -12,6 +12,9 @@
   "entrypoints": {
     "main": [
       "dev.welles.forestgrowth.ForestGrowthFabric"
+    ],
+    "modmenu": [
+      "dev.welles.forestgrowth.ForestGrowthModMenu"
     ]
   },
   "mixins": [

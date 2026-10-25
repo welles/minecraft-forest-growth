@@ -14,54 +14,63 @@ loomx.loom_version = "1.18-SNAPSHOT"
 
 [fabric."1.21.1"]
 mod.mc_compat = ">=1.21 <=1.21.1"
+deps.modmenu = "11.0.5"
 [neoforge."1.21.1"]
 mod.mc_compat = "[1.21,1.21.1]"
 deps.neo_loader = "21.1.259"
 
 [fabric."1.21.4"]
 mod.mc_compat = ">=1.21.2 <=1.21.4"
+deps.modmenu = "13.0.4"
 [neoforge."1.21.4"]
 mod.mc_compat = "[1.21.2,1.21.4]"
 deps.neo_loader = "21.4.158"
 
 [fabric."1.21.5"]
 mod.mc_compat = "1.21.5"
+deps.modmenu = "14.0.2"
 [neoforge."1.21.5"]
 mod.mc_compat = "[1.21.5]"
 deps.neo_loader = "21.5.98"
 
 [fabric."1.21.8"]
 mod.mc_compat = ">=1.21.6 <=1.21.8"
+deps.modmenu = "15.0.2"
 [neoforge."1.21.8"]
 mod.mc_compat = "[1.21.6,1.21.8]"
 deps.neo_loader = "21.8.54"
 
 [fabric."1.21.10"]
 mod.mc_compat = ">=1.21.9 <=1.21.10"
+deps.modmenu = "16.0.1"
 [neoforge."1.21.10"]
 mod.mc_compat = "[1.21.9,1.21.10]"
 deps.neo_loader = "21.10.64"
 
 [fabric."1.21.11"]
 mod.mc_compat = "1.21.11"
+deps.modmenu = "17.0.1"
 [neoforge."1.21.11"]
 mod.mc_compat = "[1.21.11]"
 deps.neo_loader = "21.11.45"
 
 [fabric."26.1.2"]
 mod.mc_compat = ">=26.1- <26.2-"
+deps.modmenu = "18.0.2"
 [neoforge."26.1.2"]
 mod.mc_compat = "[26.1,26.2)"
 deps.neo_loader = "26.1.2.116"
 
 [fabric."26.2"]
 mod.mc_compat = ">=26.2- <26.3-"
+deps.modmenu = "20.0.3"
 [neoforge."26.2"]
 mod.mc_compat = "[26.2,26.3)"
 deps.neo_loader = "26.2.0.90"
 
 [fabric."26.3"]
 mod.mc_compat = ">=26.3- <26.4-"
+deps.modmenu = "21.0.0"
 [neoforge."26.3"]
 mod.mc_compat = "[26.3,26.4)"
 deps.neo_loader = "26.3.0.76"
