@@ -27,6 +27,8 @@ All logic runs on the server, so the mod works
 
 `config/forestgrowth.properties` is created on first start. Changes are applied automatically while the game is
 running.
+On NeoForge it can also be edited in game: *Mods → Forest Growth → Config*. It changes the file of the game it is
+opened in (e.g. for singleplayer worlds), not the config of a server you are connected to.
 
 | Key               | Default | Description                                                                                                    |
 |-------------------|---------|----------------------------------------------------------------------------------------------------------------|
