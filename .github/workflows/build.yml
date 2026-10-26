@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Called by the release workflow with the version from the release tag
+  workflow_call:
+    inputs:
+      version:
+        description: Mod version to build, a leading `v` is stripped
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -46,6 +53,16 @@ jobs:
             25
 
       - uses: gradle/actions/setup-gradle@v6
+
+      # `mod.version` in stonecutter.properties.toml is the single source for the jar name,
+      # fabric.mod.json and neoforge.mods.toml; builds outside of a release are `0.0.0-dev`
+      - name: Set version
+        env:
+          VERSION: ${{ inputs.version || '0.0.0-dev' }}
+        run: |
+          version="${VERSION#v}"
+          sed -i -E "s/^mod\.version = \".*\"$/mod.version = \"$version\"/" stonecutter.properties.toml
+          grep -qxF "mod.version = \"$version\"" stonecutter.properties.toml
 
       - name: Build
         run: >
