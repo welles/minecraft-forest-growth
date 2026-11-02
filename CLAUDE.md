@@ -1,0 +1,24 @@
+# Notes for Claude
+
+## Changelog
+
+`CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and must be updated for every
+release:
+
+- Add a `## [x.y.z] - YYYY-MM-DD` section at the top with `### Added` / `### Changed` / `### Fixed` /
+  `### Removed`, describing the changes from a player's point of view, not commit by commit.
+- Add the compare link at the bottom: `[x.y.z]: https://github.com/welles/minecraft-forest-growth/compare/vPREVIOUS...vx.y.z`.
+- Commit the changelog before creating the release.
+
+## Releases
+
+1. Check that the `Build` workflow run of the latest commit on `main` is green. If a node fails while resolving
+   dependencies (e.g. a POM from libraries.minecraft.net) although it builds locally, the GitHub Actions cache is
+   probably broken: `gh cache delete --all -R welles/minecraft-forest-growth`, then rerun the failed jobs.
+2. Create the release with the changelog section as notes, followed by
+   `**Full Changelog**: https://github.com/welles/minecraft-forest-growth/compare/vPREVIOUS...vx.y.z`:
+   `gh release create vx.y.z -R welles/minecraft-forest-growth --target main --title x.y.z --notes-file <notes>`
+3. Publishing the release runs `release.yml`, which builds every node with the version from the tag and attaches
+   the jars. Check that all of them are attached. `mod.version` in the repo stays `0.0.0-dev`.
+
+New features are a minor release, fixes only a patch release.
