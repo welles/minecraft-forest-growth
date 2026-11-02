@@ -25,13 +25,15 @@ import java.util.regex.Pattern;
 
 /**
  * Edits the mod's properties file, opened with the "Config" button of NeoForge's mod list. Booleans get an on/off
- * button, all other values a text field; numbers are checked while typing. Saving only replaces the values in the file
- * and keeps its comments, the mod picks the changes up like any other edit of the file. The descriptions in the file's
- * header are shown as tooltips.
+ * button, all other values a text field; numbers are checked against their range and choices against the values they
+ * allow while typing, and the config can only be saved once every value is valid. Every value can be reset to its default, one at a time or all at once. Saving
+ * only replaces the values in the file and keeps its comments, the mod picks the changes up like any other edit of the
+ * file. The descriptions in the file's header are shown as tooltips.
  */
 public class ConfigScreen extends Screen {
     private static final int ROW_HEIGHT = 24;
     private static final int COLUMN_WIDTH = 150;
+    private static final int RESET_WIDTH = 20;
     private static final int TOP = 32;
     private static final int BOTTOM = 36;
     private static final int TEXT_COLOR = 0xFFE0E0E0;
@@ -43,14 +45,27 @@ public class ConfigScreen extends Screen {
 
     private final Screen parent;
     private final Path file;
+    private final Map<String, String> defaults;
+    private final Map<String, GrowthConfig.Range> ranges;
+    private final Map<String, List<String>> choices;
     private final List<String> lines = new ArrayList<>();
     private final List<Entry> entries = new ArrayList<>();
+    private Button doneButton;
     private int page;
 
-    public ConfigScreen(Screen parent, Path file, Component title) {
+    /**
+     * @param defaults the default value of each key, keys without one cannot be reset
+     * @param ranges   the allowed values of number keys, keys without one accept any number
+     * @param choices  the allowed values of text keys, compared ignoring case; keys without them accept any text
+     */
+    public ConfigScreen(Screen parent, Path file, Component title, Map<String, String> defaults, Map<String, GrowthConfig.Range> ranges,
+                        Map<String, List<String>> choices) {
         super(title);
         this.parent = parent;
         this.file = file;
+        this.defaults = defaults;
+        this.ranges = ranges;
+        this.choices = choices;
         load();
     }
 
@@ -64,7 +79,7 @@ public class ConfigScreen extends Screen {
                 int separator = line.indexOf('=');
                 if (line.startsWith("#") || separator < 0) continue;
                 String key = line.substring(0, separator).trim();
-                if (props.containsKey(key)) entries.add(new Entry(key, props.getProperty(key)));
+                if (props.containsKey(key)) entries.add(new Entry(key, props.getProperty(key), defaults.get(key), ranges.get(key), choices.get(key)));
             }
 
             Map<String, Entry> byKey = new HashMap<>();
@@ -91,7 +106,12 @@ public class ConfigScreen extends Screen {
     protected void init() {
         int left = width / 2 - COLUMN_WIDTH - 5;
         int right = width / 2 + 5;
+        int valueWidth = COLUMN_WIDTH - RESET_WIDTH - 4;
         addRenderableWidget(new StringWidget(width / 2 - font.width(title) / 2, 12, font.width(title), 9, title, font));
+        Button resetAll = addRenderableWidget(Button.builder(Component.literal("Reset all"), button -> resetAll())
+            .bounds(right + COLUMN_WIDTH - 80, 6, 80, 20).build());
+        resetAll.setTooltip(Tooltip.create(Component.literal("Resets every value to its default. Nothing is saved until Done.")));
+        resetAll.active = entries.stream().anyMatch(Entry::canReset);
 
         int rows = Math.max(1, (height - TOP - BOTTOM) / ROW_HEIGHT);
         int pages = Math.max(1, (entries.size() + rows - 1) / rows);
@@ -99,19 +119,33 @@ public class ConfigScreen extends Screen {
         for (int i = 0; i < rows && page * rows + i < entries.size(); i++) {
             Entry entry = entries.get(page * rows + i);
             int y = TOP + i * ROW_HEIGHT;
-            Tooltip tooltip = Tooltip.create(Component.literal(entry.key + (entry.description.isEmpty() ? "" : "\n" + entry.description)));
+            Tooltip tooltip = Tooltip.create(Component.literal(entry.tooltip()));
 
             Component label = Component.literal(entry.label());
             StringWidget labelWidget = addRenderableWidget(new StringWidget(left, y + 6, Math.min(font.width(label), COLUMN_WIDTH), 9, label, font));
             labelWidget.setTooltip(tooltip);
 
+            Button reset = Button.builder(Component.literal("↺"), button -> {
+                entry.value = entry.defaultValue;
+                rebuildWidgets();
+            }).bounds(right + COLUMN_WIDTH - RESET_WIDTH, y, RESET_WIDTH, 20).build();
+            reset.setTooltip(Tooltip.create(Component.literal(entry.defaultValue == null ? "No default" : "Reset to " + entry.defaultValue)));
+            Runnable changed = () -> {
+                reset.active = entry.canReset();
+                resetAll.active = entries.stream().anyMatch(Entry::canReset);
+                updateDone();
+            };
+
             if (entry.type == Type.BOOLEAN) {
                 CycleButton<Boolean> button = CycleButton.onOffBuilder(Boolean.parseBoolean(entry.value)).displayOnlyValue()
-                    .create(right, y, COLUMN_WIDTH, 20, label, (cycle, value) -> entry.value = String.valueOf(value));
+                    .create(right, y, valueWidth, 20, label, (cycle, value) -> {
+                        entry.value = String.valueOf(value);
+                        changed.run();
+                    });
                 button.setTooltip(tooltip);
                 addRenderableWidget(button);
             } else {
-                EditBox box = new EditBox(font, right, y, COLUMN_WIDTH, 20, label);
+                EditBox box = new EditBox(font, right, y, valueWidth, 20, label);
                 box.setMaxLength(Integer.MAX_VALUE);
                 box.setValue(entry.value);
                 // long values show their beginning
@@ -120,15 +154,19 @@ public class ConfigScreen extends Screen {
                 box.setResponder(value -> {
                     entry.value = value;
                     box.setTextColor(entry.isValid() ? TEXT_COLOR : INVALID_COLOR);
+                    changed.run();
                 });
                 box.setTooltip(tooltip);
                 addRenderableWidget(box);
             }
+            addRenderableWidget(reset);
+            reset.active = entry.canReset();
         }
 
         int bottom = height - 28;
         addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> onClose()).bounds(left, bottom, 100, 20).build());
-        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> save()).bounds(right + COLUMN_WIDTH - 100, bottom, 100, 20).build());
+        doneButton = addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> save()).bounds(right + COLUMN_WIDTH - 100, bottom, 100, 20).build());
+        updateDone();
         if (pages > 1) {
             Button previous = addRenderableWidget(Button.builder(Component.literal("<"), button -> turnPage(-1)).bounds(width / 2 - 45, bottom, 20, 20).build());
             Button next = addRenderableWidget(Button.builder(Component.literal(">"), button -> turnPage(1)).bounds(width / 2 + 25, bottom, 20, 20).build());
@@ -137,6 +175,20 @@ public class ConfigScreen extends Screen {
             Component pageLabel = Component.literal((page + 1) + " / " + pages);
             addRenderableWidget(new StringWidget(width / 2 - font.width(pageLabel) / 2, bottom + 6, font.width(pageLabel), 9, pageLabel, font));
         }
+    }
+
+    /** Done only saves valid values, the tooltip names the invalid ones, also those on other pages. */
+    private void updateDone() {
+        List<String> invalid = entries.stream().filter(entry -> !entry.isValid()).map(Entry::describeValid).toList();
+        doneButton.active = invalid.isEmpty();
+        doneButton.setTooltip(invalid.isEmpty() ? null : Tooltip.create(Component.literal("Invalid values:\n" + String.join("\n", invalid))));
+    }
+
+    private void resetAll() {
+        for (Entry entry : entries) {
+            if (entry.defaultValue != null) entry.value = entry.defaultValue;
+        }
+        rebuildWidgets();
     }
 
     private void turnPage(int offset) {
@@ -148,7 +200,7 @@ public class ConfigScreen extends Screen {
     private void save() {
         if (!entries.stream().allMatch(Entry::isValid)) return;
         Map<String, String> values = new HashMap<>();
-        for (Entry entry : entries) values.put(entry.key, entry.value);
+        for (Entry entry : entries) values.put(entry.key, entry.value.trim());
 
         List<String> updated = new ArrayList<>();
         for (String line : lines) {
@@ -173,6 +225,11 @@ public class ConfigScreen extends Screen {
         //?}
     }
 
+    /** {@code 30.0} becomes {@code 30}, {@code 0.5} stays. */
+    private static String format(double value) {
+        return value == Math.rint(value) ? String.valueOf((long) value) : String.valueOf(value);
+    }
+
     private enum Type {
         BOOLEAN, INTEGER, NUMBER, TEXT;
 
@@ -191,28 +248,70 @@ public class ConfigScreen extends Screen {
     private static final class Entry {
         final String key;
         final Type type;
+        final String defaultValue;
+        final GrowthConfig.Range range;
+        final List<String> choices;
         final StringBuilder description = new StringBuilder();
         String value;
 
-        Entry(String key, String value) {
+        Entry(String key, String value, String defaultValue, GrowthConfig.Range range, List<String> choices) {
             this.key = key;
             this.value = value.trim();
-            this.type = Type.of(this.value);
+            this.defaultValue = defaultValue;
+            this.range = range;
+            this.choices = choices;
+            // the default knows the type even if the file holds something invalid
+            this.type = Type.of(defaultValue != null ? defaultValue : this.value);
         }
 
         boolean isValid() {
             try {
                 return switch (type) {
-                    case INTEGER -> {
-                        Integer.parseInt(value.trim());
-                        yield true;
+                    case BOOLEAN -> value.trim().equalsIgnoreCase("true") || value.trim().equalsIgnoreCase("false");
+                    case INTEGER -> inRange(Integer.parseInt(value.trim()));
+                    case NUMBER -> {
+                        double number = Double.parseDouble(value.trim());
+                        yield Double.isFinite(number) && inRange(number);
                     }
-                    case NUMBER -> Double.isFinite(Double.parseDouble(value.trim()));
-                    default -> true;
+                    case TEXT -> choices == null || choices.stream().anyMatch(choice -> choice.equalsIgnoreCase(value.trim()));
                 };
             } catch (NumberFormatException e) {
                 return false;
             }
+        }
+
+        private boolean inRange(double number) {
+            return range == null || range.contains(number);
+        }
+
+        /** Whether there is a default that differs from the value, numbers compare by value: 10 is 10.0. */
+        boolean canReset() {
+            if (defaultValue == null) return false;
+            try {
+                return switch (type) {
+                    case INTEGER, NUMBER -> Double.parseDouble(value.trim()) != Double.parseDouble(defaultValue);
+                    case BOOLEAN -> !value.trim().equalsIgnoreCase(defaultValue);
+                    case TEXT -> choices == null ? !value.equals(defaultValue) : !value.trim().equalsIgnoreCase(defaultValue);
+                };
+            } catch (NumberFormatException e) {
+                return true;
+            }
+        }
+
+        String tooltip() {
+            StringBuilder tooltip = new StringBuilder(key);
+            if (!description.isEmpty()) tooltip.append('\n').append(description);
+            if (defaultValue != null) tooltip.append("\n\nDefault: ").append(defaultValue);
+            return tooltip.toString();
+        }
+
+        /** The label with what it accepts: "Launch height: 1 to 64". */
+        String describeValid() {
+            return switch (type) {
+                case BOOLEAN -> label() + ": true or false";
+                case INTEGER, NUMBER -> label() + (range == null ? ": a number" : ": " + format(range.min()) + " to " + format(range.max()));
+                case TEXT -> choices == null ? label() : label() + ": " + String.join(", ", choices);
+            };
         }
 
         /** "defaultMode" becomes "Default mode". */

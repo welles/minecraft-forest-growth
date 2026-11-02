@@ -13,7 +13,8 @@ public class ForestGrowthNeoForgeClient {
     public ForestGrowthNeoForgeClient(ModContainer container) {
         // "Config" button in the mod list
         container.registerExtensionPoint(IConfigScreenFactory.class, (mod, parent) -> new ConfigScreen(
-            parent, FMLPaths.CONFIGDIR.get().resolve(ForestGrowth.MOD_ID + ".properties"), Component.literal(mod.getModInfo().getDisplayName())
+            parent, FMLPaths.CONFIGDIR.get().resolve(ForestGrowth.MOD_ID + ".properties"), Component.literal(mod.getModInfo().getDisplayName()),
+            GrowthConfig.defaults(), GrowthConfig.RANGES, GrowthConfig.CHOICES
         ));
     }
 }

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -20,6 +21,16 @@ import java.util.stream.Collectors;
  * The file is re-read automatically whenever it changes on disk.
  */
 public final class GrowthConfig {
+    /** The allowed values of each number setting; values outside are clamped. */
+    public static final Map<String, Range> RANGES = Map.of(
+        "spreadSpeed", new Range(0.0, 1000.0),
+        "spreadRadius", new Range(1, 32),
+        "minSpacing", new Range(0, 16),
+        "minLight", new Range(0, 15)
+    );
+    /** The allowed values of each setting with a fixed set of them. */
+    public static final Map<String, List<String>> CHOICES = Map.of();
+
     public boolean enabled = true;
     public double spreadSpeed = 1.0;
     public int spreadRadius = 8;
@@ -136,10 +147,10 @@ public final class GrowthConfig {
     /** Applies all values present in {@code props}; returns whether every key was present. */
     private boolean read(Properties props) {
         enabled = bool(props, "enabled", enabled);
-        spreadSpeed = decimal(props, "spreadSpeed", spreadSpeed, 0, 1000);
-        spreadRadius = integer(props, "spreadRadius", spreadRadius, 1, 32);
-        minSpacing = integer(props, "minSpacing", minSpacing, 0, 16);
-        minLight = integer(props, "minLight", minLight, 0, 15);
+        spreadSpeed = decimal(props, "spreadSpeed", spreadSpeed);
+        spreadRadius = integer(props, "spreadRadius", spreadRadius);
+        minSpacing = integer(props, "minSpacing", minSpacing);
+        minLight = integer(props, "minLight", minLight);
         excludedPlants = props.getProperty("excludedPlants", excludedPlants);
         additionalPairs = props.getProperty("additionalPairs", additionalPairs);
         logPlanting = bool(props, "logPlanting", logPlanting);
@@ -163,6 +174,11 @@ public final class GrowthConfig {
             String value = entry.getValue().replace("\\", "\\\\").replace("\n", "\\n");
             writer.write(entry.getKey() + "=" + value + "\n");
         }
+    }
+
+    /** The default value of every setting, as written to the file. */
+    public static Map<String, String> defaults() {
+        return new GrowthConfig().toProperties();
     }
 
     private Map<String, String> toProperties() {
@@ -193,27 +209,37 @@ public final class GrowthConfig {
         return value == null ? fallback : Boolean.parseBoolean(value.trim());
     }
 
-    private static int integer(Properties props, String key, int fallback, int min, int max) {
+    private static int integer(Properties props, String key, int fallback) {
         String value = props.getProperty(key);
         if (value == null) return fallback;
         try {
-            return Math.clamp(Integer.parseInt(value.trim()), min, max);
+            return (int) RANGES.get(key).clamp(Integer.parseInt(value.trim()));
         } catch (NumberFormatException e) {
             ForestGrowth.LOGGER.warn("Invalid number for {}: {}", key, value);
             return fallback;
         }
     }
 
-    private static double decimal(Properties props, String key, double fallback, double min, double max) {
+    private static double decimal(Properties props, String key, double fallback) {
         String value = props.getProperty(key);
         if (value == null) return fallback;
         try {
             double parsed = Double.parseDouble(value.trim());
             if (Double.isNaN(parsed)) throw new NumberFormatException();
-            return Math.clamp(parsed, min, max);
+            return RANGES.get(key).clamp(parsed);
         } catch (NumberFormatException e) {
             ForestGrowth.LOGGER.warn("Invalid number for {}: {}", key, value);
             return fallback;
+        }
+    }
+
+    public record Range(double min, double max) {
+        public double clamp(double value) {
+            return Math.clamp(value, min, max);
+        }
+
+        public boolean contains(double value) {
+            return value >= min && value <= max;
         }
     }
 }
