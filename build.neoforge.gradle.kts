@@ -55,6 +55,8 @@ tasks {
             register("name", sc.properties["mod.name"])
             register("version", sc.properties["mod.version"])
             register("minecraft", sc.properties["mod.mc_compat"])
+            // The square icon in the mod list: iconFile since NeoForge 26.2, the now deprecated logoFile before
+            register("icon", if (sc.current.parsed >= "26.2") "icon" else "logo")
         }
 
         filesMatching("META-INF/neoforge.mods.toml") { expand(props) }

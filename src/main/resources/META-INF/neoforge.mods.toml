@@ -10,6 +10,9 @@ version = "${version}"
 authors = "Nico Welles"
 displayTest = "IGNORE_SERVER_VERSION" # server-side only, clients do not need the mod
 description = "Trees spread naturally: from time to time, saplings sprout near existing trees, so forests slowly grow on their own."
+${icon}File = "assets/${id}/icon.png"
+# pixel art, scaled without smoothing
+${icon}Blur = false
 
 [[mixins]]
 config = "forestgrowth.mixins.json"

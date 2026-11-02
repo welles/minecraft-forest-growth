@@ -1,3 +1,5 @@
+<img src="src/main/resources/assets/forestgrowth/icon.png" alt="" width="128" align="right">
+
 # Forest Growth
 
 A Minecraft mod for **Fabric** and **NeoForge** (Minecraft 1.21.1 – 26.3) that lets trees spread on their own:
