@@ -18,8 +18,8 @@ the same commit as the README and tell the user to paste it into CurseForge.
 
 - The front matter holds the `summary`, the text CurseForge shows in its lists: catchy, for players, at most 256
   characters, with the hook in the first sentence. Everything below the front matter is the description.
-- The description must always start with the prominent notice that the project is AI-generated (code, description
-  and icon).
+- The description must always start with the prominent AI disclaimer (code, description and icon are AI-generated,
+  why the author uses generative AI). Keep its wording the same in every mod.
 - Write it for players: what the mod does, how to install it, what can be configured; no build instructions.
 - Keep every paragraph and list item on a single line, since the CurseForge editor may turn line breaks into breaks.
 
