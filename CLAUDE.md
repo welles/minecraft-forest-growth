@@ -10,6 +10,16 @@ release:
 - Add the compare link at the bottom: `[x.y.z]: https://github.com/welles/minecraft-forest-growth/compare/vPREVIOUS...vx.y.z`.
 - Commit the changelog before creating the release.
 
+## CurseForge description
+
+`CURSEFORGE_DESCRIPTION.md` is the text of the mod's CurseForge page, pasted there by hand. Keep it up to date: whenever
+a change affects what players see (features, defaults, installation, requirements, supported versions), update it in
+the same commit as the README and tell the user to paste it into CurseForge.
+
+- It must always start with the prominent notice that the project is AI-generated (code, description and icon).
+- Write it for players: what the mod does, how to install it, what can be configured; no build instructions.
+- Keep every paragraph and list item on a single line, since the CurseForge editor may turn line breaks into breaks.
+
 ## Releases
 
 1. Check that the `Build` workflow run of the latest commit on `main` is green. If a node fails while resolving
