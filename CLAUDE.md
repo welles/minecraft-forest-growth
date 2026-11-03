@@ -16,8 +16,8 @@ release:
 a change affects what players see (features, defaults, installation, requirements, supported versions), update it in
 the same commit as the README and tell the user to paste it into CurseForge.
 
-- The front matter holds the `summary`, the one-liner CurseForge shows in its lists: catchy, for players, under
-  100 characters. Everything below the front matter is the description.
+- The front matter holds the `summary`, the text CurseForge shows in its lists: catchy, for players, at most 256
+  characters, with the hook in the first sentence. Everything below the front matter is the description.
 - The description must always start with the prominent notice that the project is AI-generated (code, description
   and icon).
 - Write it for players: what the mod does, how to install it, what can be configured; no build instructions.

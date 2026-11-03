@@ -1,5 +1,5 @@
 ---
-summary: Living forests: trees drop seeds, saplings sprout, and the woods slowly spread across your world.
+summary: Living forests: trees drop seeds, saplings sprout, and the woods slowly spread across your world. Works with every vanilla tree and most modded ones, looks natural, and runs entirely on the server.
 ---
 
 > ⚠️ **This project is AI-generated.** The code, this description and the icon of this mod were created with generative AI (Claude by Anthropic), directed by the author. Please keep that in mind, and report any problems on GitHub.
